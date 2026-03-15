@@ -10,6 +10,7 @@ on each invocation.
 """
 from __future__ import annotations
 
+from app.graphql.schema import schema
 from tests.conftest import (
     make_actor,
     make_context,
@@ -19,8 +20,6 @@ from tests.conftest import (
     make_payment,
     make_rental,
 )
-
-from app.graphql.schema import schema
 
 
 # ---------------------------------------------------------------------------

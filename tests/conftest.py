@@ -17,8 +17,6 @@ from decimal import Decimal
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
-import pytest
-
 from app.graphql.context import GraphQLContext
 from app.graphql.dataloaders import DataLoaders
 
