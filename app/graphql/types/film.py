@@ -10,6 +10,7 @@ from strawberry.types import Info
 
 if TYPE_CHECKING:
     from app.graphql.types.catalog import ActorType, CategoryType, LanguageType
+    from app.graphql.types.transactions import InventoryType
 
 
 @strawberry.enum
@@ -55,3 +56,9 @@ class FilmType:
         self, info: Info
     ) -> List[Annotated["CategoryType", strawberry.lazy("app.graphql.types.catalog")]]:
         return await info.context.loaders.film_categories.load(self.film_id)
+
+    @strawberry.field
+    async def inventories(
+        self, info: Info
+    ) -> List[Annotated["InventoryType", strawberry.lazy("app.graphql.types.transactions")]]:
+        return await info.context.loaders.film_inventories.load(self.film_id)

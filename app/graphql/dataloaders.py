@@ -166,6 +166,28 @@ class DataLoaders:
         self.rental_payments: DataLoader[int, list[PaymentType]] = DataLoader(
             load_fn=self._load_payments_by_rental_id
         )
+        # ── Reverse relations ─────────────────────────────────────────────────
+        self.rental: DataLoader[int, RentalType | None] = DataLoader(
+            load_fn=self._load_rentals
+        )
+        self.actor_films: DataLoader[int, list[FilmType]] = DataLoader(
+            load_fn=self._load_films_by_actor_id
+        )
+        self.category_films: DataLoader[int, list[FilmType]] = DataLoader(
+            load_fn=self._load_films_by_category_id
+        )
+        self.language_films: DataLoader[int, list[FilmType]] = DataLoader(
+            load_fn=self._load_films_by_language_id
+        )
+        self.film_inventories: DataLoader[int, list[InventoryType]] = DataLoader(
+            load_fn=self._load_inventories_by_film_id
+        )
+        self.inventory_rentals: DataLoader[int, list[RentalType]] = DataLoader(
+            load_fn=self._load_rentals_by_inventory_id
+        )
+        self.customer_payments: DataLoader[int, list[PaymentType]] = DataLoader(
+            load_fn=self._load_payments_by_customer_id
+        )
 
     async def _load_languages(self, ids: Sequence[int]) -> list[LanguageType | None]:
         async with self._session_factory() as db:
@@ -268,3 +290,95 @@ class DataLoaders:
         for p in payments:
             mapping[p.rental_id].append(_payment_to_type(p))
         return [mapping.get(rid, []) for rid in rental_ids]
+
+    # ── Reverse-relation batch functions ────────────────────────────────────
+
+    async def _load_rentals(self, ids: Sequence[int]) -> list[RentalType | None]:
+        async with self._session_factory() as db:
+            result = await db.execute(
+                select(Rental).where(Rental.rental_id.in_(ids))
+            )
+            mapping = {r.rental_id: _rental_to_type(r) for r in result.scalars().all()}
+        return [mapping.get(id_) for id_ in ids]
+
+    async def _load_films_by_actor_id(
+        self, actor_ids: Sequence[int]
+    ) -> list[list[FilmType]]:
+        async with self._session_factory() as db:
+            result = await db.execute(
+                select(FilmActor, Film)
+                .join(Film, FilmActor.film_id == Film.film_id)
+                .where(FilmActor.actor_id.in_(actor_ids))
+            )
+            rows = result.all()
+        mapping: dict[int, list[FilmType]] = defaultdict(list)
+        for film_actor, film in rows:
+            mapping[film_actor.actor_id].append(_film_to_type(film))
+        return [mapping.get(aid, []) for aid in actor_ids]
+
+    async def _load_films_by_category_id(
+        self, category_ids: Sequence[int]
+    ) -> list[list[FilmType]]:
+        async with self._session_factory() as db:
+            result = await db.execute(
+                select(FilmCategory, Film)
+                .join(Film, FilmCategory.film_id == Film.film_id)
+                .where(FilmCategory.category_id.in_(category_ids))
+            )
+            rows = result.all()
+        mapping: dict[int, list[FilmType]] = defaultdict(list)
+        for film_cat, film in rows:
+            mapping[film_cat.category_id].append(_film_to_type(film))
+        return [mapping.get(cid, []) for cid in category_ids]
+
+    async def _load_films_by_language_id(
+        self, language_ids: Sequence[int]
+    ) -> list[list[FilmType]]:
+        async with self._session_factory() as db:
+            result = await db.execute(
+                select(Film).where(Film.language_id.in_(language_ids))
+            )
+            films = result.scalars().all()
+        mapping: dict[int, list[FilmType]] = defaultdict(list)
+        for f in films:
+            mapping[f.language_id].append(_film_to_type(f))
+        return [mapping.get(lid, []) for lid in language_ids]
+
+    async def _load_inventories_by_film_id(
+        self, film_ids: Sequence[int]
+    ) -> list[list[InventoryType]]:
+        async with self._session_factory() as db:
+            result = await db.execute(
+                select(Inventory).where(Inventory.film_id.in_(film_ids))
+            )
+            inventories = result.scalars().all()
+        mapping: dict[int, list[InventoryType]] = defaultdict(list)
+        for i in inventories:
+            mapping[i.film_id].append(_inventory_to_type(i))
+        return [mapping.get(fid, []) for fid in film_ids]
+
+    async def _load_rentals_by_inventory_id(
+        self, inventory_ids: Sequence[int]
+    ) -> list[list[RentalType]]:
+        async with self._session_factory() as db:
+            result = await db.execute(
+                select(Rental).where(Rental.inventory_id.in_(inventory_ids))
+            )
+            rentals = result.scalars().all()
+        mapping: dict[int, list[RentalType]] = defaultdict(list)
+        for r in rentals:
+            mapping[r.inventory_id].append(_rental_to_type(r))
+        return [mapping.get(iid, []) for iid in inventory_ids]
+
+    async def _load_payments_by_customer_id(
+        self, customer_ids: Sequence[int]
+    ) -> list[list[PaymentType]]:
+        async with self._session_factory() as db:
+            result = await db.execute(
+                select(Payment).where(Payment.customer_id.in_(customer_ids))
+            )
+            payments = result.scalars().all()
+        mapping: dict[int, list[PaymentType]] = defaultdict(list)
+        for p in payments:
+            mapping[p.customer_id].append(_payment_to_type(p))
+        return [mapping.get(cid, []) for cid in customer_ids]

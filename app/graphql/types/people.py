@@ -8,7 +8,7 @@ from strawberry.types import Info
 
 if TYPE_CHECKING:
     from app.graphql.types.geography import AddressType
-    from app.graphql.types.transactions import RentalType
+    from app.graphql.types.transactions import PaymentType, RentalType
 
 
 @strawberry.type
@@ -39,6 +39,14 @@ class CustomerType:
         Annotated["RentalType", strawberry.lazy("app.graphql.types.transactions")]
     ]:
         return await info.context.loaders.customer_rentals.load(self.customer_id)
+
+    @strawberry.field
+    async def payments(
+        self, info: Info
+    ) -> List[
+        Annotated["PaymentType", strawberry.lazy("app.graphql.types.transactions")]
+    ]:
+        return await info.context.loaders.customer_payments.load(self.customer_id)
 
 
 @strawberry.type

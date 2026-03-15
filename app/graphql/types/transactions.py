@@ -9,7 +9,7 @@ from strawberry.types import Info
 
 if TYPE_CHECKING:
     from app.graphql.types.film import FilmType
-    from app.graphql.types.people import CustomerType
+    from app.graphql.types.people import CustomerType, StaffType
 
 
 @strawberry.type
@@ -24,6 +24,12 @@ class InventoryType:
         self, info: Info
     ) -> Optional[Annotated["FilmType", strawberry.lazy("app.graphql.types.film")]]:
         return await info.context.loaders.film.load(self.film_id)
+
+    @strawberry.field
+    async def rentals(
+        self, info: Info
+    ) -> List[Annotated["RentalType", strawberry.lazy("app.graphql.types.transactions")]]:
+        return await info.context.loaders.inventory_rentals.load(self.inventory_id)
 
 
 @strawberry.type
@@ -69,6 +75,22 @@ class PaymentType:
     rental_id: int
     amount: Decimal
     payment_date: datetime
+
+    @strawberry.field
+    async def customer(
+        self, info: Info
+    ) -> Optional[
+        Annotated["CustomerType", strawberry.lazy("app.graphql.types.people")]
+    ]:
+        return await info.context.loaders.customer.load(self.customer_id)
+
+    @strawberry.field
+    async def rental(
+        self, info: Info
+    ) -> Optional[
+        Annotated["RentalType", strawberry.lazy("app.graphql.types.transactions")]
+    ]:
+        return await info.context.loaders.rental.load(self.rental_id)
 
 
 @strawberry.type
