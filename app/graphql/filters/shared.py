@@ -16,6 +16,15 @@ class SortDirection(enum.Enum):
     DESC = "desc"
 
 
+@strawberry.enum
+class MpaaRatingEnum(enum.StrEnum):
+    G = "G"
+    PG = "PG"
+    PG13 = "PG-13"
+    R = "R"
+    NC17 = "NC-17"
+
+
 # ── Scalar filter input types ──────────────────────────────────────────────────
 # Each type supports a set of comparison operators as optional fields.
 # Multiple operators on the same field are AND-ed together.
@@ -234,3 +243,9 @@ def apply_date_filter(
     if f.lte is not None:
         q = q.where(column <= d.fromisoformat(f.lte))
     return q
+
+
+@strawberry.input(description="Filter operators for Category")
+class CategoryFilter:
+    category_id: Optional[IntFilter] = strawberry.field(default=None)
+    name: Optional[StringFilter] = strawberry.field(default=None)

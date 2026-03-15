@@ -8,7 +8,8 @@ from sqlalchemy import select
 from strawberry.dataloader import DataLoader
 
 from app.graphql.types.catalog import ActorType, CategoryType, LanguageType
-from app.graphql.types.film import FilmType, MpaaRatingEnum
+from app.graphql.filters.shared import MpaaRatingEnum
+from app.graphql.types.film import FilmType
 from app.graphql.types.geography import AddressType
 from app.graphql.types.people import CustomerType
 from app.graphql.types.transactions import InventoryType, PaymentType, RentalType

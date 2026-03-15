@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 import enum
-from typing import List, Optional
+from typing import Annotated, List, Optional
 
 import strawberry
 
 from app.graphql.filters.shared import IntFilter, SortDirection, StringFilter
-from app.graphql.types.catalog import ActorType
 from app.graphql.types.common import PageInfo
 
 
@@ -34,5 +33,5 @@ class ActorSort:
 
 @strawberry.type
 class ActorConnection:
-    items: List[ActorType]
+    items: List[Annotated["ActorType", strawberry.lazy("app.graphql.types.catalog")]]
     page_info: PageInfo

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import enum
-from typing import List, Optional
+from typing import Annotated, List, Optional
 
 import strawberry
 
@@ -12,7 +12,6 @@ from app.graphql.filters.shared import (
     StringFilter,
 )
 from app.graphql.types.common import PageInfo
-from app.graphql.types.people import CustomerType
 
 
 @strawberry.enum
@@ -42,5 +41,5 @@ class CustomerSort:
 
 @strawberry.type
 class CustomerConnection:
-    items: List[CustomerType]
+    items: List[Annotated["CustomerType", strawberry.lazy("app.graphql.types.people")]]
     page_info: PageInfo

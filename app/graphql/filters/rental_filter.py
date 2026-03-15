@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 import enum
-from typing import List, Optional
+from typing import Annotated, List, Optional
 
 import strawberry
 
 from app.graphql.filters.shared import DateTimeFilter, IntFilter, SortDirection
 from app.graphql.types.common import PageInfo
-from app.graphql.types.transactions import RentalType
 
 
 @strawberry.enum
@@ -38,5 +37,5 @@ class RentalSort:
 
 @strawberry.type
 class RentalConnection:
-    items: List[RentalType]
+    items: List[Annotated["RentalType", strawberry.lazy("app.graphql.types.transactions")]]
     page_info: PageInfo

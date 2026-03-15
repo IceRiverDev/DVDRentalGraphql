@@ -1,18 +1,18 @@
 from __future__ import annotations
 
 import enum
-from typing import List, Optional
+from typing import Annotated, List, Optional
 
 import strawberry
 
 from app.graphql.filters.shared import (
     FloatFilter,
     IntFilter,
+    MpaaRatingEnum,
     SortDirection,
     StringFilter,
 )
 from app.graphql.types.common import PageInfo
-from app.graphql.types.film import FilmType, MpaaRatingEnum
 
 
 @strawberry.enum
@@ -51,5 +51,5 @@ class FilmSort:
 
 @strawberry.type
 class FilmConnection:
-    items: List[FilmType]
+    items: List[Annotated["FilmType", strawberry.lazy("app.graphql.types.film")]]
     page_info: PageInfo

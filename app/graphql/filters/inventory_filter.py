@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import Annotated, List, Optional
 
 import strawberry
 
 from app.graphql.filters.shared import IntFilter
 from app.graphql.types.common import PageInfo
-from app.graphql.types.transactions import InventoryType
 
 
 @strawberry.input
@@ -19,5 +18,5 @@ class InventoryFilter:
 
 @strawberry.type
 class InventoryConnection:
-    items: List[InventoryType]
+    items: List[Annotated["InventoryType", strawberry.lazy("app.graphql.types.transactions")]]
     page_info: PageInfo
