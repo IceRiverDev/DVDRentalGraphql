@@ -262,3 +262,255 @@ app/
     ├── dataloaders.py  # DataLoader batch functions (N+1 prevention)
     └── schema.py       # strawberry.Schema definition
 ```
+
+---
+
+## Architecture: How a Query Flows Through the Code
+
+This section walks through a concrete example end-to-end so that anyone
+maintaining this codebase can understand every layer.
+
+### Example query
+
+```graphql
+query {
+  films(
+    filter: { rating: PG, length: { gte: 90, lte: 120 } }
+    page: 1
+    pageSize: 5
+  ) {
+    items {
+      title
+      rating
+      length
+      language { name }
+      actors { firstName lastName }
+    }
+    pageInfo { total }
+  }
+}
+```
+
+---
+
+### Step 1 — HTTP request → FastAPI → context
+
+FastAPI receives the `POST /graphql` request. Before anything GraphQL happens,
+the `get_context` function in `main.py` is called:
+
+```python
+# app/main.py
+async def get_context(request: Request) -> GraphQLContext:
+    current_user = await get_current_user_from_request(request)  # validates JWT
+    loaders = DataLoaders()                                       # creates fresh DataLoaders per request
+    return GraphQLContext(
+        session_factory=AsyncSessionLocal,  # no shared session – each resolver opens its own
+        current_user=current_user,
+        loaders=loaders,
+    )
+```
+
+The context object is passed to every resolver in the request.
+
+---
+
+### Step 2 — Schema routes the query to a resolver
+
+Strawberry reads the query, finds the `films` top-level field, and calls the
+matching method on the `Query` class. The method is marked with
+`@strawberry.field`:
+
+```python
+# app/graphql/resolvers/query.py
+@strawberry.type
+class Query:
+
+    @strawberry.field
+    async def films(
+        self,
+        info: Info,                           # framework-injected context
+        filter: Optional[FilmFilter] = None,  # parsed from filter: { ... }
+        sort: Optional[FilmSort] = None,
+        page: int = 1,
+        page_size: int = 20,
+    ) -> FilmConnection:                      # return type drives what fields are queryable
+        ...
+```
+
+Strawberry automatically deserialises `filter: { rating: PG, length: { gte: 90, lte: 120 } }`
+into a `FilmFilter` Python object before calling the method.
+
+---
+
+### Step 3 — `@strawberry.input` defines what the filter object looks like
+
+`FilmFilter` is a Strawberry **input type** — a typed container for incoming
+arguments:
+
+```python
+# app/graphql/filters/film_filter.py
+@strawberry.input          # input = used only as an argument, never returned
+class FilmFilter:
+    film_id: Optional[IntFilter] = None
+    title:   Optional[StringFilter] = None
+    rating:  Optional[MpaaRatingEnum] = None
+    length:  Optional[IntFilter] = None     # { gte: 90, lte: 120 } maps here
+    ...
+```
+
+`IntFilter` is itself another `@strawberry.input`:
+
+```python
+# app/graphql/filters/shared.py
+@strawberry.input
+class IntFilter:
+    eq:  Optional[int] = None
+    gte: Optional[int] = None   # ← 90
+    lte: Optional[int] = None   # ← 120
+    ...
+```
+
+> **Rule of thumb:**
+> `@strawberry.input` = data coming **in** (arguments).
+> `@strawberry.type`  = data going **out** (response fields).
+
+---
+
+### Step 4 — Resolver opens its own DB session and builds the SQL query
+
+Each resolver opens an **independent** `AsyncSession` to avoid concurrency
+issues (Strawberry resolves multiple top-level fields in parallel).
+
+```python
+async with info.context.session_factory() as db:
+    q = select(Film)
+
+    if filter:
+        # apply_int_filter translates IntFilter → SQLAlchemy .where() clauses
+        q = apply_int_filter(q, Film.length, filter.length)
+        # e.g. Film.length >= 90 AND Film.length <= 120
+
+        if filter.rating is not None:
+            q = q.where(Film.rating == OrmRating(filter.rating.value))
+        ...
+```
+
+The `apply_*` helpers in `shared.py` are simple utilities that translate each
+operator field into a `.where()` clause:
+
+```python
+def apply_int_filter(q, column, f):
+    if f is None: return q
+    if f.gte is not None: q = q.where(column >= f.gte)
+    if f.lte is not None: q = q.where(column <= f.lte)
+    ...
+    return q
+```
+
+---
+
+### Step 5 — `@strawberry.type` defines what the response looks like
+
+The resolver returns a `FilmConnection`, which is a `@strawberry.type`:
+
+```python
+# app/graphql/filters/film_filter.py
+@strawberry.type           # type = used only as a return value
+class FilmConnection:
+    items:     List[FilmType]
+    page_info: PageInfo
+```
+
+The fields you ask for in the query (`items { ... }`, `pageInfo { total }`)
+must exist on this type — otherwise Strawberry rejects the query at parse time.
+
+---
+
+### Step 6 — Nested fields trigger DataLoaders
+
+You asked for `language { name }` and `actors { firstName lastName }`.
+These are defined as `@strawberry.field` methods on `FilmType`:
+
+```python
+# app/graphql/types/film.py
+@strawberry.type
+class FilmType:
+    film_id:  int
+    title:    str
+    rating:   Optional[MpaaRatingEnum]
+    length:   Optional[int]
+    ...
+
+    @strawberry.field
+    async def language(self, info: Info) -> Optional[LanguageType]:
+        return await info.context.loaders.language.load(self.language_id)
+
+    @strawberry.field
+    async def actors(self, info: Info) -> List[ActorType]:
+        return await info.context.loaders.film_actors.load(self.film_id)
+```
+
+Strawberry resolves `language` and `actors` **concurrently** for every film in
+the result set. Without DataLoaders this would fire N×2 SQL queries.
+
+---
+
+### Step 7 — DataLoaders batch N queries into one
+
+`DataLoader` collects all `load()` calls that happen in the same async tick
+and fires a single batched SQL query:
+
+```python
+# app/graphql/dataloaders.py
+async def _load_languages(self, ids: Sequence[int]) -> list[LanguageType | None]:
+    async with self._session_factory() as db:          # own session per batch
+        result = await db.execute(
+            select(Language).where(Language.language_id.in_(ids))
+            # ids = [1, 1, 1, 2, 1, ...] collected from all 5 films at once
+            # → single SQL: WHERE language_id IN (1, 2)
+        )
+        mapping = {l.language_id: _language_to_type(l) for l in result.scalars()}
+    return [mapping.get(id_) for id_ in ids]
+```
+
+Each DataLoader batch also opens its **own** `AsyncSession` to avoid the
+"concurrent operations not permitted" error (SQLAlchemy async sessions are
+not safe to use from multiple coroutines simultaneously).
+
+---
+
+### Full flow diagram
+
+```
+POST /graphql  ──►  get_context()
+                        │  validates JWT
+                        │  creates DataLoaders
+                        │  stores session_factory
+                        ▼
+               strawberry.Schema  ──►  Query.films(filter, page, ...)
+                                            │
+                                            │  opens AsyncSession
+                                            │  builds SELECT ... WHERE ...
+                                            │  runs COUNT + SELECT
+                                            ▼
+                                       FilmConnection
+                                        ├── items: [FilmType, ...]
+                                        │       └── language  ──►  DataLoader._load_languages()
+                                        │                              └── SELECT … IN (ids)
+                                        │       └── actors    ──►  DataLoader._load_actors_by_film_id()
+                                        │                              └── SELECT … IN (film_ids)
+                                        └── page_info: PageInfo
+```
+
+---
+
+### Strawberry keyword reference
+
+| Decorator | Used on | Purpose |
+|---|---|---|
+| `@strawberry.type` | Class | Defines a **response** object (what the client can query) |
+| `@strawberry.input` | Class | Defines an **argument** object (what the client can send) |
+| `@strawberry.field` | Method | Marks a method as a GraphQL field with a custom resolver |
+| `@strawberry.enum` | Enum class | Exposes a Python enum as a GraphQL enum |
+| `strawberry.lazy(…)` | Type annotation | Defers type import to break circular imports |
+| `Info` | Parameter type | Framework-injected object giving access to `context` |
