@@ -1,0 +1,8 @@
+fastapi[standard]>=0.115.0
+strawberry-graphql[fastapi]>=0.250.0
+sqlalchemy[asyncio]>=2.0.36
+asyncpg>=0.30.0
+pydantic-settings>=2.7.0
+python-jose[cryptography]>=3.3.0
+httpx>=0.28.0
+uvicorn[standard]>=0.34.0
