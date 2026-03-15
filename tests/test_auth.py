@@ -18,6 +18,7 @@ from app.core.security import decode_token, get_current_user_from_request
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_request(authorization: str | None) -> MagicMock:
     """Build a minimal fake FastAPI Request with a controllable header."""
     request = MagicMock()
@@ -40,6 +41,7 @@ _VALID_PAYLOAD = {
 # ---------------------------------------------------------------------------
 # get_current_user_from_request
 # ---------------------------------------------------------------------------
+
 
 class TestGetCurrentUserFromRequest:
     async def test_missing_header_raises_401(self):
@@ -76,7 +78,9 @@ class TestGetCurrentUserFromRequest:
         request = _make_request("Bearer bad.token")
         with patch(
             "app.core.security.decode_token",
-            new=AsyncMock(side_effect=HTTPException(status_code=401, detail="Invalid token")),
+            new=AsyncMock(
+                side_effect=HTTPException(status_code=401, detail="Invalid token")
+            ),
         ):
             with pytest.raises(HTTPException) as exc_info:
                 await get_current_user_from_request(request)
@@ -86,6 +90,7 @@ class TestGetCurrentUserFromRequest:
 # ---------------------------------------------------------------------------
 # decode_token
 # ---------------------------------------------------------------------------
+
 
 class TestDecodeToken:
     async def test_invalid_token_raises_401(self):

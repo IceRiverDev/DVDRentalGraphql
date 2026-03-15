@@ -52,7 +52,9 @@ def _film_to_type(f: Film) -> FilmType:
 
 
 def _language_to_type(l: Language) -> LanguageType:
-    return LanguageType(language_id=l.language_id, name=l.name, last_update=l.last_update)
+    return LanguageType(
+        language_id=l.language_id, name=l.name, last_update=l.last_update
+    )
 
 
 def _actor_to_type(a: Actor) -> ActorType:
@@ -134,12 +136,15 @@ def _payment_to_type(p: Payment) -> PaymentType:
 class DataLoaders:
     def __post_init__(self) -> None:
         from app.core.database import AsyncSessionLocal
+
         self._session_factory = AsyncSessionLocal
 
         self.language: DataLoader[int, LanguageType | None] = DataLoader(
             load_fn=self._load_languages
         )
-        self.film: DataLoader[int, FilmType | None] = DataLoader(load_fn=self._load_films)
+        self.film: DataLoader[int, FilmType | None] = DataLoader(
+            load_fn=self._load_films
+        )
         self.film_actors: DataLoader[int, list[ActorType]] = DataLoader(
             load_fn=self._load_actors_by_film_id
         )
@@ -167,7 +172,9 @@ class DataLoaders:
             result = await db.execute(
                 select(Language).where(Language.language_id.in_(ids))
             )
-            mapping = {l.language_id: _language_to_type(l) for l in result.scalars().all()}
+            mapping = {
+                l.language_id: _language_to_type(l) for l in result.scalars().all()
+            }
         return [mapping.get(id_) for id_ in ids]
 
     async def _load_films(self, ids: Sequence[int]) -> list[FilmType | None]:
@@ -176,7 +183,9 @@ class DataLoaders:
             mapping = {f.film_id: _film_to_type(f) for f in result.scalars().all()}
         return [mapping.get(id_) for id_ in ids]
 
-    async def _load_actors_by_film_id(self, film_ids: Sequence[int]) -> list[list[ActorType]]:
+    async def _load_actors_by_film_id(
+        self, film_ids: Sequence[int]
+    ) -> list[list[ActorType]]:
         async with self._session_factory() as db:
             result = await db.execute(
                 select(FilmActor, Actor)
@@ -209,7 +218,9 @@ class DataLoaders:
             result = await db.execute(
                 select(Address).where(Address.address_id.in_(ids))
             )
-            mapping = {a.address_id: _address_to_type(a) for a in result.scalars().all()}
+            mapping = {
+                a.address_id: _address_to_type(a) for a in result.scalars().all()
+            }
         return [mapping.get(id_) for id_ in ids]
 
     async def _load_customers(self, ids: Sequence[int]) -> list[CustomerType | None]:
@@ -217,7 +228,9 @@ class DataLoaders:
             result = await db.execute(
                 select(Customer).where(Customer.customer_id.in_(ids))
             )
-            mapping = {c.customer_id: _customer_to_type(c) for c in result.scalars().all()}
+            mapping = {
+                c.customer_id: _customer_to_type(c) for c in result.scalars().all()
+            }
         return [mapping.get(id_) for id_ in ids]
 
     async def _load_rentals_by_customer_id(
@@ -238,7 +251,9 @@ class DataLoaders:
             result = await db.execute(
                 select(Inventory).where(Inventory.inventory_id.in_(ids))
             )
-            mapping = {i.inventory_id: _inventory_to_type(i) for i in result.scalars().all()}
+            mapping = {
+                i.inventory_id: _inventory_to_type(i) for i in result.scalars().all()
+            }
         return [mapping.get(id_) for id_ in ids]
 
     async def _load_payments_by_rental_id(

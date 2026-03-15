@@ -26,6 +26,7 @@ from tests.conftest import (
 # Helper
 # ---------------------------------------------------------------------------
 
+
 async def _exec(query: str, ctx, variables: dict | None = None):
     """Execute a GraphQL query and assert no errors."""
     result = await schema.execute(query, context_value=ctx, variable_values=variables)
@@ -36,6 +37,7 @@ async def _exec(query: str, ctx, variables: dict | None = None):
 # ===========================================================================
 # Films
 # ===========================================================================
+
 
 class TestFilmsQuery:
     BASIC_QUERY = """
@@ -105,7 +107,10 @@ class TestFilmsQuery:
     """
 
     async def test_length_range_int_filter(self):
-        films = [make_film(1, "SHORT FILM", length=60), make_film(2, "MED FILM", length=90)]
+        films = [
+            make_film(1, "SHORT FILM", length=60),
+            make_film(2, "MED FILM", length=90),
+        ]
         ctx, _ = make_context(films, total=2)
         data = await _exec(
             self.LENGTH_FILTER_QUERY,
@@ -163,6 +168,7 @@ class TestFilmsQuery:
 # Actors
 # ===========================================================================
 
+
 class TestActorsQuery:
     BASIC_QUERY = """
     query {
@@ -174,7 +180,10 @@ class TestActorsQuery:
     """
 
     async def test_basic_returns_actors(self):
-        actors = [make_actor(1, "PENELOPE", "GUINESS"), make_actor(2, "NICK", "WAHLBERG")]
+        actors = [
+            make_actor(1, "PENELOPE", "GUINESS"),
+            make_actor(2, "NICK", "WAHLBERG"),
+        ]
         ctx, _ = make_context(actors, total=2)
         data = await _exec(self.BASIC_QUERY, ctx)
         assert len(data["actors"]["items"]) == 2
@@ -214,6 +223,7 @@ class TestActorsQuery:
 # Customers
 # ===========================================================================
 
+
 class TestCustomersQuery:
     BASIC_QUERY = """
     query {
@@ -225,7 +235,10 @@ class TestCustomersQuery:
     """
 
     async def test_basic_returns_customers(self):
-        customers = [make_customer(1, "MARY", "SMITH"), make_customer(2, "PATRICIA", "JOHNSON")]
+        customers = [
+            make_customer(1, "MARY", "SMITH"),
+            make_customer(2, "PATRICIA", "JOHNSON"),
+        ]
         ctx, _ = make_context(customers, total=2)
         data = await _exec(self.BASIC_QUERY, ctx)
         assert len(data["customers"]["items"]) == 2
@@ -251,6 +264,7 @@ class TestCustomersQuery:
 # ===========================================================================
 # Rentals
 # ===========================================================================
+
 
 class TestRentalsQuery:
     BASIC_QUERY = """
@@ -307,6 +321,7 @@ class TestRentalsQuery:
 # Payments
 # ===========================================================================
 
+
 class TestPaymentsQuery:
     BASIC_QUERY = """
     query {
@@ -359,6 +374,7 @@ class TestPaymentsQuery:
 # ===========================================================================
 # Inventories
 # ===========================================================================
+
 
 class TestInventoriesQuery:
     BASIC_QUERY = """

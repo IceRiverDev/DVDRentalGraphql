@@ -5,7 +5,12 @@ from typing import List, Optional
 
 import strawberry
 
-from app.graphql.filters.shared import DateFilter, IntFilter, SortDirection, StringFilter
+from app.graphql.filters.shared import (
+    DateFilter,
+    IntFilter,
+    SortDirection,
+    StringFilter,
+)
 from app.graphql.types.common import PageInfo
 from app.graphql.types.people import CustomerType
 

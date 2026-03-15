@@ -120,18 +120,26 @@ class Query:
                 q = apply_string_filter(q, Film.description, filter.description)
                 if filter.rating is not None:
                     from app.models.models import MpaaRating as OrmRating
+
                     q = q.where(Film.rating == OrmRating(filter.rating.value))
                 if filter.rating_in is not None:
                     from app.models.models import MpaaRating as OrmRating
-                    q = q.where(Film.rating.in_([OrmRating(r.value) for r in filter.rating_in]))
+
+                    q = q.where(
+                        Film.rating.in_([OrmRating(r.value) for r in filter.rating_in])
+                    )
                 if filter.language_id is not None:
                     q = apply_int_filter(q, Film.language_id, filter.language_id)
                 if filter.category_id is not None or filter.category_name is not None:
                     q = q.join(FilmCategory, Film.film_id == FilmCategory.film_id)
                     if filter.category_id is not None:
-                        q = apply_int_filter(q, FilmCategory.category_id, filter.category_id)
+                        q = apply_int_filter(
+                            q, FilmCategory.category_id, filter.category_id
+                        )
                     if filter.category_name is not None:
-                        q = q.join(Category, FilmCategory.category_id == Category.category_id)
+                        q = q.join(
+                            Category, FilmCategory.category_id == Category.category_id
+                        )
                         q = apply_string_filter(q, Category.name, filter.category_name)
                 if filter.actor_id is not None or filter.actor_name is not None:
                     q = q.join(FilmActor, Film.film_id == FilmActor.film_id)
@@ -168,7 +176,9 @@ class Query:
                     FilmSortField.FILM_ID: Film.film_id,
                 }
                 col = col_map[sort.field]
-                q = q.order_by(col.asc() if sort.direction.value == "asc" else col.desc())
+                q = q.order_by(
+                    col.asc() if sort.direction.value == "asc" else col.desc()
+                )
             else:
                 q = q.order_by(Film.title.asc())
 
@@ -181,9 +191,7 @@ class Query:
             )
 
     @strawberry.field
-    async def film(
-        self, info: Info, film_id: int
-    ) -> Optional[FilmType]:
+    async def film(self, info: Info, film_id: int) -> Optional[FilmType]:
         async with info.context.session_factory() as db:
             result = await db.execute(select(Film).where(Film.film_id == film_id))
             f = result.scalar_one_or_none()
@@ -225,7 +233,9 @@ class Query:
                     ActorSortField.ACTOR_ID: Actor.actor_id,
                 }
                 col = col_map[sort.field]
-                q = q.order_by(col.asc() if sort.direction.value == "asc" else col.desc())
+                q = q.order_by(
+                    col.asc() if sort.direction.value == "asc" else col.desc()
+                )
             else:
                 q = q.order_by(Actor.last_name.asc())
 
@@ -238,9 +248,7 @@ class Query:
             )
 
     @strawberry.field
-    async def actor(
-        self, info: Info, actor_id: int
-    ) -> Optional[ActorType]:
+    async def actor(self, info: Info, actor_id: int) -> Optional[ActorType]:
         async with info.context.session_factory() as db:
             result = await db.execute(select(Actor).where(Actor.actor_id == actor_id))
             a = result.scalar_one_or_none()
@@ -284,7 +292,9 @@ class Query:
                     CustomerSortField.EMAIL: Customer.email,
                 }
                 col = col_map[sort.field]
-                q = q.order_by(col.asc() if sort.direction.value == "asc" else col.desc())
+                q = q.order_by(
+                    col.asc() if sort.direction.value == "asc" else col.desc()
+                )
             else:
                 q = q.order_by(Customer.last_name.asc())
 
@@ -297,9 +307,7 @@ class Query:
             )
 
     @strawberry.field
-    async def customer(
-        self, info: Info, customer_id: int
-    ) -> Optional[CustomerType]:
+    async def customer(self, info: Info, customer_id: int) -> Optional[CustomerType]:
         async with info.context.session_factory() as db:
             result = await db.execute(
                 select(Customer).where(Customer.customer_id == customer_id)
@@ -341,7 +349,8 @@ class Query:
                         .join(Film, Inventory.film_id == Film.film_id)
                         .where(Rental.return_date.is_(None))
                         .where(
-                            Rental.rental_date + text("INTERVAL '1 day' * film.rental_duration")
+                            Rental.rental_date
+                            + text("INTERVAL '1 day' * film.rental_duration")
                             < func.now()
                         )
                     )
@@ -357,7 +366,9 @@ class Query:
                     RentalSortField.CUSTOMER_ID: Rental.customer_id,
                 }
                 col = col_map[sort.field]
-                q = q.order_by(col.asc() if sort.direction.value == "asc" else col.desc())
+                q = q.order_by(
+                    col.asc() if sort.direction.value == "asc" else col.desc()
+                )
             else:
                 q = q.order_by(Rental.rental_date.desc())
 
@@ -370,11 +381,11 @@ class Query:
             )
 
     @strawberry.field
-    async def rental(
-        self, info: Info, rental_id: int
-    ) -> Optional[RentalType]:
+    async def rental(self, info: Info, rental_id: int) -> Optional[RentalType]:
         async with info.context.session_factory() as db:
-            result = await db.execute(select(Rental).where(Rental.rental_id == rental_id))
+            result = await db.execute(
+                select(Rental).where(Rental.rental_id == rental_id)
+            )
             r = result.scalar_one_or_none()
             return _rental_to_type(r) if r else None
 
@@ -442,7 +453,9 @@ class Query:
                     PaymentSortField.CUSTOMER_ID: Payment.customer_id,
                 }
                 col = col_map[sort.field]
-                q = q.order_by(col.asc() if sort.direction.value == "asc" else col.desc())
+                q = q.order_by(
+                    col.asc() if sort.direction.value == "asc" else col.desc()
+                )
             else:
                 q = q.order_by(Payment.payment_date.desc())
 
@@ -455,11 +468,11 @@ class Query:
             )
 
     @strawberry.field
-    async def payment(
-        self, info: Info, payment_id: int
-    ) -> Optional[PaymentType]:
+    async def payment(self, info: Info, payment_id: int) -> Optional[PaymentType]:
         async with info.context.session_factory() as db:
-            result = await db.execute(select(Payment).where(Payment.payment_id == payment_id))
+            result = await db.execute(
+                select(Payment).where(Payment.payment_id == payment_id)
+            )
             p = result.scalar_one_or_none()
             return _payment_to_type(p) if p else None
 
@@ -530,9 +543,7 @@ class Query:
             )
 
     @strawberry.field
-    async def inventory(
-        self, info: Info, inventory_id: int
-    ) -> Optional[InventoryType]:
+    async def inventory(self, info: Info, inventory_id: int) -> Optional[InventoryType]:
         async with info.context.session_factory() as db:
             result = await db.execute(
                 select(Inventory).where(Inventory.inventory_id == inventory_id)
@@ -545,13 +556,21 @@ class Query:
     @strawberry.field
     async def categories(self, info: Info) -> List[CategoryType]:
         async with info.context.session_factory() as db:
-            rows = (await db.execute(select(Category).order_by(Category.name))).scalars().all()
+            rows = (
+                (await db.execute(select(Category).order_by(Category.name)))
+                .scalars()
+                .all()
+            )
             return [_category_to_type(c) for c in rows]
 
     @strawberry.field
     async def languages(self, info: Info) -> List[LanguageType]:
         async with info.context.session_factory() as db:
-            rows = (await db.execute(select(Language).order_by(Language.name))).scalars().all()
+            rows = (
+                (await db.execute(select(Language).order_by(Language.name)))
+                .scalars()
+                .all()
+            )
             return [_language_to_type(l) for l in rows]
 
     @strawberry.field
@@ -560,11 +579,15 @@ class Query:
             from app.models.models import Country as CountryModel
 
             rows = (
-                await db.execute(select(CountryModel).order_by(CountryModel.country))
-            ).scalars().all()
+                (await db.execute(select(CountryModel).order_by(CountryModel.country)))
+                .scalars()
+                .all()
+            )
             return [
                 CountryType(
-                    country_id=c.country_id, country=c.country, last_update=c.last_update
+                    country_id=c.country_id,
+                    country=c.country,
+                    last_update=c.last_update,
                 )
                 for c in rows
             ]
@@ -572,7 +595,11 @@ class Query:
     @strawberry.field
     async def stores(self, info: Info) -> List[StoreType]:
         async with info.context.session_factory() as db:
-            rows = (await db.execute(select(Store).order_by(Store.store_id))).scalars().all()
+            rows = (
+                (await db.execute(select(Store).order_by(Store.store_id)))
+                .scalars()
+                .all()
+            )
             return [
                 StoreType(
                     store_id=s.store_id,

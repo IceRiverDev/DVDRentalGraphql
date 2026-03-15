@@ -20,10 +20,14 @@ async def get_context(request: Request) -> GraphQLContext:
     # GET requests load the GraphiQL UI — skip auth
     if request.method == "GET":
         loaders = DataLoaders()
-        return GraphQLContext(session_factory=AsyncSessionLocal, current_user={}, loaders=loaders)
+        return GraphQLContext(
+            session_factory=AsyncSessionLocal, current_user={}, loaders=loaders
+        )
     current_user = await get_current_user_from_request(request)
     loaders = DataLoaders()
-    return GraphQLContext(session_factory=AsyncSessionLocal, current_user=current_user, loaders=loaders)
+    return GraphQLContext(
+        session_factory=AsyncSessionLocal, current_user=current_user, loaders=loaders
+    )
 
 
 @asynccontextmanager

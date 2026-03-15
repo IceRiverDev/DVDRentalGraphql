@@ -47,6 +47,7 @@ def _sql(q) -> str:
 # StringFilter
 # ---------------------------------------------------------------------------
 
+
 class TestApplyStringFilter:
     def _q(self, f: StringFilter) -> str:
         return _sql(apply_string_filter(select(_t), name_col, f))
@@ -109,6 +110,7 @@ class TestApplyStringFilter:
 # IntFilter
 # ---------------------------------------------------------------------------
 
+
 class TestApplyIntFilter:
     def _q(self, f: IntFilter) -> str:
         return _sql(apply_int_filter(select(_t), id_col, f))
@@ -164,6 +166,7 @@ class TestApplyIntFilter:
 # FloatFilter
 # ---------------------------------------------------------------------------
 
+
 class TestApplyFloatFilter:
     def _q(self, f: FloatFilter) -> str:
         return _sql(apply_float_filter(select(_t), score_col, f))
@@ -193,6 +196,7 @@ class TestApplyFloatFilter:
 # ---------------------------------------------------------------------------
 # DateTimeFilter
 # ---------------------------------------------------------------------------
+
 
 class TestApplyDateTimeFilter:
     def _q(self, f: DateTimeFilter) -> str:
@@ -224,6 +228,7 @@ class TestApplyDateTimeFilter:
 # ---------------------------------------------------------------------------
 # DateFilter
 # ---------------------------------------------------------------------------
+
 
 class TestApplyDateFilter:
     def _q(self, f: DateFilter) -> str:

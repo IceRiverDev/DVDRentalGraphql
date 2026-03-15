@@ -5,7 +5,12 @@ from typing import List, Optional
 
 import strawberry
 
-from app.graphql.filters.shared import DateTimeFilter, FloatFilter, IntFilter, SortDirection
+from app.graphql.filters.shared import (
+    DateTimeFilter,
+    FloatFilter,
+    IntFilter,
+    SortDirection,
+)
 from app.graphql.types.common import PageInfo
 from app.graphql.types.transactions import PaymentType
 
