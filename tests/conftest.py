@@ -25,6 +25,7 @@ from app.graphql.dataloaders import DataLoaders
 # Helpers to build fake ORM-like objects
 # ---------------------------------------------------------------------------
 
+
 def make_film(
     film_id: int = 1,
     title: str = "Test Film",
@@ -51,7 +52,9 @@ def make_film(
     return film
 
 
-def make_actor(actor_id: int = 1, first_name: str = "John", last_name: str = "Doe") -> MagicMock:
+def make_actor(
+    actor_id: int = 1, first_name: str = "John", last_name: str = "Doe"
+) -> MagicMock:
     actor = MagicMock()
     actor.actor_id = actor_id
     actor.first_name = first_name
@@ -60,7 +63,9 @@ def make_actor(actor_id: int = 1, first_name: str = "John", last_name: str = "Do
     return actor
 
 
-def make_customer(customer_id: int = 1, first_name: str = "Alice", last_name: str = "Smith") -> MagicMock:
+def make_customer(
+    customer_id: int = 1, first_name: str = "Alice", last_name: str = "Smith"
+) -> MagicMock:
     customer = MagicMock()
     customer.customer_id = customer_id
     customer.store_id = 1
@@ -75,7 +80,9 @@ def make_customer(customer_id: int = 1, first_name: str = "Alice", last_name: st
     return customer
 
 
-def make_rental(rental_id: int = 1, customer_id: int = 1, inventory_id: int = 1) -> MagicMock:
+def make_rental(
+    rental_id: int = 1, customer_id: int = 1, inventory_id: int = 1
+) -> MagicMock:
     rental = MagicMock()
     rental.rental_id = rental_id
     rental.rental_date = datetime(2005, 6, 14, 23, 41, 0)
@@ -87,7 +94,9 @@ def make_rental(rental_id: int = 1, customer_id: int = 1, inventory_id: int = 1)
     return rental
 
 
-def make_payment(payment_id: int = 1, customer_id: int = 1, amount: float = 3.99) -> MagicMock:
+def make_payment(
+    payment_id: int = 1, customer_id: int = 1, amount: float = 3.99
+) -> MagicMock:
     payment = MagicMock()
     payment.payment_id = payment_id
     payment.customer_id = customer_id
@@ -98,7 +107,9 @@ def make_payment(payment_id: int = 1, customer_id: int = 1, amount: float = 3.99
     return payment
 
 
-def make_inventory(inventory_id: int = 1, film_id: int = 1, store_id: int = 1) -> MagicMock:
+def make_inventory(
+    inventory_id: int = 1, film_id: int = 1, store_id: int = 1
+) -> MagicMock:
     inv = MagicMock()
     inv.inventory_id = inventory_id
     inv.film_id = film_id
@@ -110,6 +121,7 @@ def make_inventory(inventory_id: int = 1, film_id: int = 1, store_id: int = 1) -
 # ---------------------------------------------------------------------------
 # Mock DB session factory
 # ---------------------------------------------------------------------------
+
 
 def build_session(rows: list[Any], total: int) -> AsyncMock:
     """Return an AsyncMock session whose execute() alternates between a
@@ -141,7 +153,10 @@ def make_session_factory(rows: list[Any], total: int | None = None):
 # GraphQLContext factory
 # ---------------------------------------------------------------------------
 
-def make_context(rows: list[Any], total: int | None = None) -> tuple[GraphQLContext, AsyncMock]:
+
+def make_context(
+    rows: list[Any], total: int | None = None
+) -> tuple[GraphQLContext, AsyncMock]:
     factory, session = make_session_factory(rows, total)
     loaders = DataLoaders()
     ctx = GraphQLContext(

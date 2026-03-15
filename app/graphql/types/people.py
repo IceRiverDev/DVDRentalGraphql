@@ -27,13 +27,17 @@ class CustomerType:
     @strawberry.field
     async def address(
         self, info: Info
-    ) -> Optional[Annotated["AddressType", strawberry.lazy("app.graphql.types.geography")]]:
+    ) -> Optional[
+        Annotated["AddressType", strawberry.lazy("app.graphql.types.geography")]
+    ]:
         return await info.context.loaders.address.load(self.address_id)
 
     @strawberry.field
     async def rentals(
         self, info: Info
-    ) -> List[Annotated["RentalType", strawberry.lazy("app.graphql.types.transactions")]]:
+    ) -> List[
+        Annotated["RentalType", strawberry.lazy("app.graphql.types.transactions")]
+    ]:
         return await info.context.loaders.customer_rentals.load(self.customer_id)
 
 

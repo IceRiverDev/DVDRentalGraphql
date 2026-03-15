@@ -39,7 +39,9 @@ class FilmType:
     @strawberry.field
     async def language(
         self, info: Info
-    ) -> Optional[Annotated["LanguageType", strawberry.lazy("app.graphql.types.catalog")]]:
+    ) -> Optional[
+        Annotated["LanguageType", strawberry.lazy("app.graphql.types.catalog")]
+    ]:
         return await info.context.loaders.language.load(self.language_id)
 
     @strawberry.field

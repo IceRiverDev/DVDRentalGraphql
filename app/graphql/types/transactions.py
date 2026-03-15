@@ -39,19 +39,25 @@ class RentalType:
     @strawberry.field
     async def inventory(
         self, info: Info
-    ) -> Optional[Annotated["InventoryType", strawberry.lazy("app.graphql.types.transactions")]]:
+    ) -> Optional[
+        Annotated["InventoryType", strawberry.lazy("app.graphql.types.transactions")]
+    ]:
         return await info.context.loaders.inventory.load(self.inventory_id)
 
     @strawberry.field
     async def customer(
         self, info: Info
-    ) -> Optional[Annotated["CustomerType", strawberry.lazy("app.graphql.types.people")]]:
+    ) -> Optional[
+        Annotated["CustomerType", strawberry.lazy("app.graphql.types.people")]
+    ]:
         return await info.context.loaders.customer.load(self.customer_id)
 
     @strawberry.field
     async def payments(
         self, info: Info
-    ) -> List[Annotated["PaymentType", strawberry.lazy("app.graphql.types.transactions")]]:
+    ) -> List[
+        Annotated["PaymentType", strawberry.lazy("app.graphql.types.transactions")]
+    ]:
         return await info.context.loaders.rental_payments.load(self.rental_id)
 
 
